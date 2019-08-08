@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC 
+    "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+    "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<hibernate-mapping>
+	<!-- 1、 配置类和表对应 class标签 name属性：实体类全路径   table属性：数据库表名称(自己起) -->
+	<class name="cn.itcast.domain.CustomerAction" table="t_customer">
+		<!-- 实体类属性id，字段id -->
+		<id name="custId" column="custId">
+			<!-- 生成策略 -->
+			<generator class="native"></generator>
+		</id>
+		<!-- 实体类属性 ，字段 -->
+		<property name="custName" column="custName"></property>
+		<property name="address" column="address"></property>
+	</class>
+
+
+</hibernate-mapping>

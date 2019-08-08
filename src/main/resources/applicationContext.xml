@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+     http://www.springframework.org/schema/beans/spring-beans.xsd
+     http://www.springframework.org/schema/context
+     http://www.springframework.org/schema/context/spring-context.xsd
+     http://www.springframework.org/schema/aop
+     http://www.springframework.org/schema/aop/spring-aop.xsd
+     http://www.springframework.org/schema/tx
+     http://www.springframework.org/schema/tx/spring-tx.xsd">
+	<!-- 加载属性文件 -->
+	<context:property-placeholder location="classpath:db.properties" />
+	<!-- 配置c3p0连接池 -->
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+		<!-- 注入属性值 ognl表达式 -->
+		<property name="driverClass" value="${jdbc.driverClass}"></property>
+		<property name="jdbcUrl" value="${jdbc.jdbcUrl}"></property>
+		<property name="user" value="${jdbc.user}"></property>
+		<property name="password" value="${jdbc.password}"></property>
+	</bean>
+	<!-- 配置SessionFactory对象 -->
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+		<!-- 注入dataSource -->
+		<property name="dataSource" ref="dataSource"></property>
+		<property name="configLocations" ref="classpath:hibernate.cfg.xml"></property>
+	</bean>
+
+	<!-- 配置事务管理器 -->
+	<bean id="transactionManager"
+		class="org.springframework.orm.hibernate5.HibernateTransactionManager">
+		<!-- 注入sessionFactory -->
+		<property name="sessionFactory" ref="sessionFactory"></property>
+	</bean>
+
+	<!-- xml方式管理事务 -->
+	<!-- 配置通知 ：具体的增强的逻辑 -->
+	<tx:advice id="txAdvice">
+		<tx:attributes>
+			<!-- 匹配业务层类中方法名称 -->
+			<tx:method name="save*" />
+			<tx:method name="update*" />
+			<tx:method name="delete*" />
+			<tx:method name="find*" read-only="true" />
+			<tx:method name="*" />
+		</tx:attributes>
+	</tx:advice>
+	<!-- 配置aop:切点，切面 -->
+	<aop:config>
+		<!-- 配置切点 ：具体增强位置（具体哪些方法要增强） execution:切点表达式 service层下，所有的类，所有的方法，方法任意的参数都开启事务 -->
+		<aop:pointcut expression="execution(* cn.itcast.service.*.*(..))"
+			id="cut" />
+		<!-- 配置切面:增强的逻辑作用到切点（通知+切入点） -->
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="cut" />
+	</aop:config>
+	<!-- 注解方式管理事务 -->
+	<!-- 1、开启注解驱动 2、在service类上或者方法上使用注解@Transactional -->
+	<!-- <tx:annotation-driven transaction-manager="transactionManager"/> -->
+	<!-- 配置dao对象 -->
+	<bean id="customerDao" class="cn.itcast.dao.CustomerDaoImpl">
+		<property name="sessionFactory" ref="sessionFactory"></property>
+	</bean>
+
+	<!-- 配置service对象 -->
+	<bean id="customerService" class="cn.itcast.service.CustomerServiceImpl">
+		<property name="customerDao" ref="customerDao"></property>
+	</bean>
+
+	<!-- 配置action对象 多实例 -->
+	<bean id="customerAction" class="cn.itcast.action.CustomerAction"
+		scope="prototype">
+		<property name="customerService" ref="customerService"></property>
+	</bean>
+
+</beans>
